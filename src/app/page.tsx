@@ -9,6 +9,8 @@ import { SlidingImage } from "@/components/three/SlidingImage";
 import { CentralFrame } from "@/components/three/CentralFrame";
 import { SleepingHeart } from "@/components/three/SleepingHeart";
 import { HomeOverlay } from "@/components/layout/HomeOverlay";
+import { ScrollBurn } from "@/components/three/ScrollBurn";
+import { HandwrittenTitle } from "@/components/ui/HandwrittenTitle";
 
 export default function Home() {
   const [started, setStarted] = useState(false);
@@ -47,7 +49,7 @@ export default function Home() {
   return (
     <main className="relative w-full bg-black">
       {/* Scrollable Spacer - Defines the scroll distance */}
-      <div className="h-[250vh] w-full pointer-events-none" />
+      <div className="h-[500vh] w-full pointer-events-none" />
 
       {/* HTML Interface Overlay (Introduction Text) - Fixed */}
       <div 
@@ -65,6 +67,8 @@ export default function Home() {
       <div className="fixed inset-0 z-40 pointer-events-none">
         {started && <HomeOverlay started={started} />}
       </div>
+
+      <HandwrittenTitle />
 
       {/* 3D Scene - Fixed Background */}
       <div className="fixed inset-0 z-0 h-screen w-screen">
@@ -93,6 +97,8 @@ export default function Home() {
             
             {/* The Sleeping Heart (Ember) */}
             <SleepingHeart active={started} onStart={() => setStarted(true)} />
+
+            <ScrollBurn active={started} />
             
             <Environment preset="city" />
           </Suspense>
@@ -107,6 +113,21 @@ export default function Home() {
           </EffectComposer>
         </Canvas>
       </div>
+
+      {/* --- WHITE PAGE SECTION --- */}
+      {/* Appears after scrolling past the night sky (approx 300vh down) */}
+      <section className="absolute top-[300vh] w-full min-h-[200vh] bg-white z-20 flex flex-col items-center pt-32">
+         {/* Placeholder content for the white page */}
+         <div className="max-w-4xl mx-auto px-6 text-center">
+            <h2 className="text-4xl md:text-6xl text-black font-thin mb-8 tracking-widest font-serif">
+               L'Écosystème
+            </h2>
+            <p className="text-gray-600 text-lg md:text-xl leading-relaxed max-w-2xl mx-auto">
+               Une approche holistique pour transformer votre pharmacie. 
+               Nous unifions gestion, expérience client et performance dans une interface unique.
+            </p>
+         </div>
+      </section>
     </main>
   );
 }

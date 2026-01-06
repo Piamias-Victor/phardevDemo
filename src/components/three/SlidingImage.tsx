@@ -15,11 +15,15 @@ interface Props {
   active?: boolean;
 }
 
+interface SlidingMaterial extends THREE.ShaderMaterial {
+  uOpacity: number;
+  uScrollOpacity: number;
+}
+
 export function SlidingImage({ url, side = "left", yOffset = 0, delay = 3.5, active = false }: Props) {
   const groupRef = useRef<THREE.Group>(null);
   const meshRef = useRef<THREE.Mesh>(null);
-  // Extend ShaderMaterial type for our uniforms
-  const materialRef = useRef<THREE.ShaderMaterial & { uOpacity: number }>(null);
+  const materialRef = useRef<SlidingMaterial>(null);
   const texture = useTexture(url);
   const { viewport } = useThree();
   
@@ -31,7 +35,6 @@ export function SlidingImage({ url, side = "left", yOffset = 0, delay = 3.5, act
   const baseWidth = baseHeight * aspect;
   
   // Target position
-  // Left: Push further left (0.32). Right: Push right (0.30)
   const xMult = side === "left" ? 0.32 : 0.30;
   const targetX = (side === "left" ? -1 : 1) * viewport.width * xMult; 
   
@@ -40,8 +43,6 @@ export function SlidingImage({ url, side = "left", yOffset = 0, delay = 3.5, act
 
     // Initial State (Group)
     const startScale = 1.5; 
-    
-    // Start X
     const startX = (side === "left" ? -1 : 1) * viewport.width * 0.45;
     
     gsap.set(groupRef.current.position, { 
@@ -54,6 +55,7 @@ export function SlidingImage({ url, side = "left", yOffset = 0, delay = 3.5, act
     
     if (materialRef.current) {
         materialRef.current.uOpacity = 0;
+        materialRef.current.uScrollOpacity = 1;
     }
 
     const ctx = gsap.context(() => {
@@ -91,18 +93,37 @@ export function SlidingImage({ url, side = "left", yOffset = 0, delay = 3.5, act
     return () => ctx.revert();
   }, [baseHeight, targetX, viewport.height, viewport.width, side, yOffset, delay, active]);
 
-  // Position Parallax (Inner Mesh)
+  // Position Parallax + Scroll Exit
   useFrame((state) => {
-    if (!meshRef.current) return;
+    if (!meshRef.current || !materialRef.current) return;
+
     const mouseX = state.pointer.x; // -1 to 1
     const mouseY = state.pointer.y; // -1 to 1
     
-    // Move slightly opposite to mouse, or with mouse? "Bouge avec ma souris" usually means reacting to it.
-    // Subtle floaty feel: slightly follow mouse.
+    // Parallax
     const parallaxStrength = 0.5; 
+
+    // Scroll Logic
+    let scrollOffset = 0;
+    if (typeof window !== "undefined") {
+      const scrollY = window.scrollY;
+      const EXIT_RANGE = 500; // Pixel distance to fully exit
+      const exitProgress = Math.min(scrollY / EXIT_RANGE, 1);
+      
+      // Update Opacity
+      materialRef.current.uScrollOpacity = 1 - exitProgress;
+      
+      // Slide Outwards (Left goes left, Right goes right)
+      const slideDist = 4; // Distance to slide away
+      const dir = side === "left" ? -1 : 1;
+      scrollOffset = dir * slideDist * exitProgress;
+    }
     
-    meshRef.current.position.x = THREE.MathUtils.lerp(meshRef.current.position.x, mouseX * parallaxStrength, 0.05);
-    meshRef.current.position.y = THREE.MathUtils.lerp(meshRef.current.position.y, mouseY * parallaxStrength, 0.05);
+    const targetX = (mouseX * parallaxStrength) + scrollOffset;
+    const targetY = (mouseY * parallaxStrength);
+    
+    meshRef.current.position.x = THREE.MathUtils.lerp(meshRef.current.position.x, targetX, 0.05);
+    meshRef.current.position.y = THREE.MathUtils.lerp(meshRef.current.position.y, targetY, 0.05);
   });
 
   return (
@@ -113,6 +134,7 @@ export function SlidingImage({ url, side = "left", yOffset = 0, delay = 3.5, act
               ref={materialRef}
               uTex={texture} 
               uOpacity={0}
+              uScrollOpacity={1}
               uFeather={0.15} // Soft edges
               transparent={true}
               depthTest={false} 
