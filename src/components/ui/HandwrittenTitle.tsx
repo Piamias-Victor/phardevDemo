@@ -37,7 +37,7 @@ export function HandwrittenTitle() {
         
         {/* Title: Pinyon Script (Classic) */}
         <motion.h2
-           className="text-6xl md:text-9xl text-white text-center pb-8 drop-shadow-lg"
+           className="text-6xl md:text-9xl text-white text-center pb-8 drop-shadow-sm"
            style={{ fontFamily: 'var(--font-pinyon)' }}
            initial={{ opacity: 0, y: 30 }}
            animate={{ opacity: visible ? 1 : 0, y: visible ? 0 : 30 }}
@@ -48,7 +48,7 @@ export function HandwrittenTitle() {
 
         {/* CLassic Div Underline */}
         <motion.div 
-          className="h-[2px] bg-white shadow-lg"
+          className="h-[2px] bg-white shadow-sm"
           style={{ 
             width: "300px",
             scaleX: underlineProgress,

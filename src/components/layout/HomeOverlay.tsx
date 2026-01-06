@@ -38,8 +38,8 @@ export function HomeOverlay({ started }: Props) {
 
   useMotionValueEvent(scrollY, "change", (latest) => {
     setIsScrolled(latest > SCROLL_THRESHOLD * 0.8);
-    // Switch to black text when entering white page (approx 2800px)
-    setIsWhitePage(latest > 2800);
+    // Switch to black text when entering white page (delayed +200px -> 1700px)
+    setIsWhitePage(latest > 1700);
   });
 
   // Header Animations

@@ -11,6 +11,8 @@ import { SleepingHeart } from "@/components/three/SleepingHeart";
 import { HomeOverlay } from "@/components/layout/HomeOverlay";
 import { ScrollBurn } from "@/components/three/ScrollBurn";
 import { HandwrittenTitle } from "@/components/ui/HandwrittenTitle";
+import { TornPaperEdge } from "@/components/ui/TornPaperEdge";
+import { WhitePaperBurn } from "@/components/three/WhitePaperBurn";
 
 export default function Home() {
   const [started, setStarted] = useState(false);
@@ -99,6 +101,7 @@ export default function Home() {
             <SleepingHeart active={started} onStart={() => setStarted(true)} />
 
             <ScrollBurn active={started} />
+            <WhitePaperBurn active={started} />
             
             <Environment preset="city" />
           </Suspense>
@@ -114,9 +117,12 @@ export default function Home() {
         </Canvas>
       </div>
 
+
       {/* --- WHITE PAGE SECTION --- */}
-      {/* Appears after scrolling past the night sky (approx 300vh down) */}
-      <section className="absolute top-[300vh] w-full min-h-[200vh] bg-white z-20 flex flex-col items-center pt-32">
+      {/* Content sits on top of the 3D 'WhitePaperBurn' layer */}
+      {/* We make background transparent because the 3D plane provides the white color */}
+      <section className="absolute top-[300vh] w-full min-h-[200vh] z-20 flex flex-col items-center pt-32 pointer-events-auto">
+         
          {/* Placeholder content for the white page */}
          <div className="max-w-4xl mx-auto px-6 text-center">
             <h2 className="text-4xl md:text-6xl text-black font-thin mb-8 tracking-widest font-serif">
