@@ -1,6 +1,5 @@
 "use client";
 
-// Placeholder to ensure I see the file first.
 // I will apply the change via replace_file_content in the NEXT turn after reading.
 // For now, I just wait for the thought process validation.
 // Actually, I can write the logic assuming standard Drei behavior.
@@ -8,6 +7,7 @@
 
 // Let's refactor HomeOverlay to be R3F compatible.
 import { useEffect, useState } from "react";
+import { motion, useScroll, useTransform, useSpring, useMotionValueEvent } from "framer-motion";
 
 // ... imports
 
@@ -20,15 +20,63 @@ interface Props {
 
 export function HomeOverlay({ started }: Props) {
   const [visible, setVisible] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
+  const { scrollY } = useScroll();
+  
+  // 1. Add Physics/Smoothing
+  // "Heavy" spring for that premium, delayed feel
+  const smoothScroll = useSpring(scrollY, {
+    stiffness: 50,
+    damping: 20,
+    mass: 1
+  });
+
+  // Scroll threshold (in pixels) for the transition
+  const SCROLL_THRESHOLD = 400;
+
+  useMotionValueEvent(scrollY, "change", (latest) => {
+    setIsScrolled(latest > SCROLL_THRESHOLD * 0.8);
+  });
+
+  // Header Animations
+  // Initial: Higher position (35%)
+  // Target: Top-Left (5%)
+  const headerTop = useTransform(smoothScroll, [0, SCROLL_THRESHOLD], ["35%", "5%"]); 
+  const headerLeft = useTransform(smoothScroll, [0, SCROLL_THRESHOLD], ["50%", "5%"]);
+  // Initial X/Y: -50% -50% (Centered relative to itself)
+  const headerX = useTransform(smoothScroll, [0, SCROLL_THRESHOLD], ["-50%", "0%"]);
+  const headerY = useTransform(smoothScroll, [0, SCROLL_THRESHOLD], ["-50%", "0%"]); // -50% to sit slightly above center initially vs menu
+  const headerScale = useTransform(smoothScroll, [0, SCROLL_THRESHOLD], [1, 0.65]);
+
+  // Menu Animations
+  // Initial: Below header
+  // Target: Left Sidebar area
+  // Menu Animations
+  // Initial: Below header (Reduced gap)
+  // Target: Left Sidebar area
+  const menuTop = useTransform(smoothScroll, [0, SCROLL_THRESHOLD], ["45%", "50%"]); 
+  // User asked for "gauche comme système de navigation". Usually that means left vertical center.
+  
+  // Let's position it initially below the header
+  const menuInitialY = "10%"; // Closer to header (was 60%)
+  const menuTargetY = "-50%"; // Centered vertically on the side
+  
+  const menuLeft = useTransform(smoothScroll, [0, SCROLL_THRESHOLD], ["50%", "5%"]);
+  const menuX = useTransform(smoothScroll, [0, SCROLL_THRESHOLD], ["-50%", "0%"]);
+  const menuY = useTransform(smoothScroll, [0, SCROLL_THRESHOLD], [menuInitialY, menuTargetY]);
+  
+  
+  // Opacity fade for the smooth transition entry
+  const contentOpacity = visible ? 1 : 0;
 
   useEffect(() => {
     if (started) {
       const timer = setTimeout(() => {
         setVisible(true);
-      }, 6500); 
+      }, 4000); 
       return () => clearTimeout(timer);
     } else {
-        setVisible(false);
+      setVisible(false);
     }
   }, [started]);
 
@@ -39,49 +87,70 @@ export function HomeOverlay({ started }: Props) {
     { label: "Nos Expériences", roman: "IV" },
   ];
 
+  // Dynamic Styles based on scroll state
+  // Hover effects always white as requested
+  const hoverTextColor = "hover:text-white";
+  const underlineColor = "bg-white";
+  const lineHoverColor = "group-hover:bg-white group-hover:opacity-100";
+
   return (
-    <div className="absolute inset-0 z-40 flex items-center justify-center pointer-events-none">
-      <div 
-        className={`flex flex-col justify-between py-12 px-8 w-[90vw] md:w-[22vw] h-[60vh] md:h-[42vh] mb-8 md:mb-16 transition-all duration-[1500ms] ease-[cubic-bezier(0.22,1,0.36,1)] ${visible ? 'opacity-100 translate-y-0 blur-0 scale-100' : 'opacity-0 translate-y-12 blur-sm scale-95'}`}
+    <div className="fixed inset-0 z-40 pointer-events-none">
+      
+      {/* HEADER: Phardev Logo */}
+      <motion.div
+        style={{
+          position: "absolute",
+          top: headerTop,
+          left: headerLeft,
+          x: headerX,
+          y: headerY,
+          scale: headerScale,
+          transformOrigin: "top left",
+          opacity: contentOpacity,
+        }}
+        className="text-center pointer-events-auto transition-opacity duration-1000 max-w-lg mx-auto"
       >
-        {/* Header Section */}
-        <div className="text-center pointer-events-auto">
-          <h1 className="text-4xl md:text-5xl font-thin tracking-widest text-white mb-4 uppercase font-serif drop-shadow-[0_4px_10px_rgba(0,0,0,1)]">
-            Phardev
-          </h1>
-          {/* Separator */}
-          <div className="h-0.5 w-24 bg-white mx-auto mb-6 shadow-lg opacity-80" />
-          
-          <p className="text-white font-medium text-xs md:text-sm tracking-[0.2em] uppercase leading-relaxed drop-shadow-[0_2px_4px_rgba(0,0,0,1)]">
-            La Renaissance <br/> Digitale
-          </p>
-        </div>
+        <h1 className="text-3xl md:text-5xl font-thin tracking-[0.15em] text-white mb-2 uppercase font-serif drop-shadow-[0_4px_10px_rgba(0,0,0,1)] whitespace-nowrap">
+          Phardev
+        </h1>
+        <div className="h-0.5 w-full bg-white mx-auto mb-3 shadow-lg opacity-80" />
+        <p className="text-white font-medium text-xs md:text-sm tracking-[0.2em] uppercase leading-relaxed drop-shadow-[0_2px_4px_rgba(0,0,0,1)]">
+          La Renaissance <br /> Digitale
+        </p>
+      </motion.div>
 
-        {/* Menu Section */}
-        <div className="flex flex-col gap-5 mt-8 pointer-events-auto">
-          {menuItems.map((item, index) => (
-            <div key={index} className="group flex items-center justify-between text-white hover:text-white transition-colors duration-300 cursor-pointer">
-              {/* Left: Label */}
-              <span className="text-xs md:text-xs font-bold uppercase tracking-[0.15em] relative drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
-                {item.label}
-                 <span className="absolute left-0 -bottom-1 h-[1px] w-0 bg-white transition-all duration-500 group-hover:w-full box-shadow-glow" />
-              </span>
+      {/* MENU: Navigation Items */}
+      <motion.div
+        style={{
+            position: "absolute",
+            top: menuTop,
+            left: menuLeft,
+            x: menuX,
+            y: menuY,
+            opacity: contentOpacity,
+        }}
+        className="flex flex-col gap-6 w-[250px] md:w-[300px] pointer-events-auto transition-opacity duration-1000"
+      >
+        {menuItems.map((item, index) => (
+          <div key={index} className={`group flex items-center justify-between text-white ${hoverTextColor} transition-colors duration-300 cursor-pointer`}>
+            {/* Label */}
+            <span className="text-xs md:text-sm font-bold uppercase tracking-[0.15em] relative drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
+              {item.label}
+              <span className={`absolute left-0 -bottom-1 h-[1px] w-0 ${underlineColor} transition-all duration-500 group-hover:w-full`} />
+            </span>
 
-              {/* Middle: Custom Dotted Line */}
-              <div className="flex-1 mx-3 h-full flex items-center relative overflow-hidden">
-                 <div 
-                    className="w-full h-[4px] bg-[radial-gradient(circle,white_1.5px,transparent_1.5px)] bg-[length:12px_4px] bg-repeat-x opacity-60 translate-x-[-100%] transition-transform duration-700 ease-out group-hover:translate-x-0" 
-                 />
-              </div>
-
-              {/* Right: Roman Numeral */}
-              <span className="text-xs md:text-xs font-serif tracking-widest min-w-[20px] text-right text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
-                {item.roman}
-              </span>
+            {/* Connecting Line - Subtler */}
+            <div className="flex-1 mx-4 h-full flex items-center overflow-hidden opacity-30 group-hover:opacity-100 transition-opacity">
+               <div className={`w-full h-[1px] bg-white/50 transition-colors duration-300 ${lineHoverColor}`} />
             </div>
-          ))}
-        </div>
-      </div>
+
+            {/* Roman Numeral */}
+            <span className="text-xs font-serif tracking-widest text-right opacity-70 group-hover:opacity-100">
+              {item.roman}
+            </span>
+          </div>
+        ))}
+      </motion.div>
     </div>
   );
 }
